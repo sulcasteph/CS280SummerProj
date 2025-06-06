@@ -1,12 +1,12 @@
 public class Main {
 
-    FINAL static int boardSize = 8;
+    static final int boardSize = 8;
 
     static int[][] chessBoard  = new int[8][8];
 
     //possible moves for the knight
-    static int[] x = {2, 1, -1, -2, -2, -1, 1, 2};
-    static int[] y = {1, 2, 2, 1, -1, -2, -2, -1};
+    static int[] xMoves= {2, 1, -1, -2, -2, -1, 1, 2};
+    static int[] yMoves = {1, 2, 2, 1, -1, -2, -2, -1};
 
     //solving the knight's tour with backtracking + Warnsdorff' rule
     public static boolean solveKnightTour(int x, int y, int moveCount){
@@ -16,11 +16,70 @@ public class Main {
         }
 
         int [][] nextMoves = getSortedMoves(x, y);
+
+        for (int i = 0; i < nextMoves.length; i++){
+            int nextX = nextMoves[i][0];
+            int nextY = nextMoves[i][1];
+
+            // mark the square as visited
+            chessBoard[nextX][nextY] = moveCount;
+
+            // recursive call to continue the tour
+            if(solveKnightTour(nextX, nextY, moveCount + 1)){
+                return true; // found a solution
+            }
+
+            // backtrack
+            chessBoard[nextX][nextY] = 0;
+        }
+
+        return false; // no solution 
     }
 
     // getting next possible moves for the knight --> sorted by Warnsdorff's Rule (least onward moves)
     public static int[][] getSortedMoves(int x, int y){
+        java.util.List<int[]> moves = new java.util.ArrayList<>();
+
+        for(int i = 0; i < 8; i++){
+            int nextX = x + xMoves[i];
+            int nextY = y + yMoves[i];
+
+            if(isSafe(nextX, nextY)){
+                int forwardMoves = countForwardMoves(nextX, nextY);
+                moves.add(new int[]{nextX, nextY, forwardMoves});
+            }
+        }
+
+        // sort by the number of forward moves
+        moves.sort(java.util.Comparator.comparingInt(a -> a[2]));
+
+        int[][] result = new int[moves.size()][2];
+        for (int i = 0; i < moves.size(); i++){
+            result[i][0] = moves.get(i)[0];
+            result[i][1] = moves.get(i)[1];
+        }
+
+        return result; 
+
+    }
+
+    public static int countForwardMoves(int x, int y){
+        int count = 0;
+
+        for (int i = 0; i < 8; i++){
+            int nextX = x + xMoves[i];
+            int nextY = y + yMoves[i];
+
+            if(isSafe(nextX, nextY)){
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public static boolean isSafe(int x, int y){
         
+        return (x >= 0 && y >= 0 && x < boardSize && y < boardSize && chessBoard[x][y] == 0);
     }
 
     public static boolean isValidStart(int x, int y){
@@ -30,6 +89,15 @@ public class Main {
         }
 
         return true;
+    }
+
+    public static void printBoard(){
+        for(int[] row : chessBoard){
+            for(int val : row){
+                System.out.printf("%2d ", val);
+            }
+            System.out.println();
+        }
     }
 
     public static void main(String[] args){
@@ -49,6 +117,8 @@ public class Main {
         java.util.Scanner scanner = new java.util.Scanner(System.in);
         startX = scanner.nextInt();
         startY = scanner.nextInt();
+        chessBoard[startX][startY] = 1; 
+        scanner.close();
 
         // checking if the starting position is valid
         if(!isValidStart(startX, startY)){
@@ -57,7 +127,7 @@ public class Main {
         }
 
         // solve the knights tour
-        if (solveKnightTour(starX, startY, 2)){
+        if (solveKnightTour(startX, startY, 2)){
             printBoard();
         }
         else{
